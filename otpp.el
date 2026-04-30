@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: June 15, 2025
+;; Modified: April 30, 2026
 ;; Version: 3.4.1
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -746,3 +746,8 @@ Calls ORIG-FN with ARGS."
 (provide 'one-tab-per-project)
 (provide 'otpp)
 ;;; otpp.el ends here
+
+;; Local Variables:
+;; time-stamp-pattern: "^;; Modified: %%$"
+;; time-stamp-format: "%B %d, %Y"
+;; End:
