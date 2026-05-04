@@ -679,7 +679,7 @@ Calls ORIG-FN based on ARGS."
                        (tab-bar-get-buffer-tab buffer t t t))))
       (progn
         (message "Buffer still alive in %d tab%s, burying it instead." (length tabs) (if (length> tabs 1) "s" ""))
-        (bury-buffer))
+        (bury-buffer buffer))
     (funcall fn buffer)))
 
 
