@@ -696,7 +696,6 @@ create the project's tab.
 
 Calls ORIG-FN with ARGS."
   (when-let* ((proj-curr (project-current nil (file-name-directory (car args)))))
-    (message (file-name-directory (car args)))
     (let ((project-switch-commands #'ignore))
       (project-switch-project (project-root proj-curr))))
   (apply orig-fn args))
