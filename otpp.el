@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: April 30, 2026
+;; Modified: May 17, 2026
 ;; Version: 3.4.1
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -183,6 +183,18 @@ inside, a Repo workspace, etc)."
   :type '(choice function boolean)
   :version "1.0.1")
 
+(defcustom otpp-kill-project-buffers-on-tab-close nil
+  "Kill the project's buffers when calling `tab-close'.
+
+Can be nil, `ask' or t or a function that returns one of them. When set
+to `ask', ask for confirmation before killing the project's buffers."
+  :group 'otpp
+  :type '(choice function
+                 (const :tag "Don't kill project buffers" nil)
+                 (const :tag "Kill project buffers without asking" t)
+                 (const :tag "Ask for confirmation" ask))
+  :version "3.5.0")
+
 (defcustom otpp-post-change-tab-root-functions nil
   "List of functions to call after changing the `otpp-root-dir' of a tab.
 
@@ -274,6 +286,11 @@ When `otpp-mode' is enabled and only one tab exists, rename it to
 (defvar-local otpp-project-name nil)
 (defvar otpp-uniq-map-default (make-hash-table :test 'equal))
 (defvar otpp-uniq-format "%s[%s]")
+(defvar otpp-internal-call nil)
+
+(defmacro otpp-with-internal-calls (&rest body)
+  "Call BODY with `otpp-internal-call' set to t."
+  `(let ((otpp-internal-call t)) ,@body))
 
 ;;;###autoload
 (put 'otpp-project-name 'safe-local-variable 'stringp)
@@ -625,6 +642,13 @@ command in the `default-directory', otherwise, it will bind the
 
 ;;; Advices for the integration with `project'
 
+(defun otpp--kill-project-buffers (tab last-tab-p)
+  (otpp-with-internal-calls
+   (when-let* ((killp (otpp--funcall-or-value otpp-kill-project-buffers-on-tab-close))
+               (root-dir (otpp-get-tab-root-dir tab))
+               (proj (project-current nil root-dir)))
+     (project-kill-buffers (not (eq killp 'ask)) proj))))
+
 (defun otpp--project-current-a (orig-fn &rest args)
   "Call ORIG-FN with ARGS, set the `otpp-root-dir' accordingly.
 
@@ -636,7 +660,8 @@ Does nothing if the current tab belongs to the selected project.
 
 Otherwise, select or create the tab of the selected project."
   (let ((proj-curr (apply orig-fn args)))
-    (when-let* ((proj-dir (and proj-curr (project-root proj-curr)))
+    (when-let* (((not otpp-internal-call))
+                (proj-dir (and proj-curr (project-root proj-curr)))
                 (maybe-prompt (car args)))
       (let ((curr-tab-root-dir (otpp-get-tab-root-dir))
             (target-proj-root-dir (expand-file-name proj-dir)))
@@ -648,16 +673,19 @@ Otherwise, select or create the tab of the selected project."
   "Switch to the right tab after switching to a project.
 
 Calls ORIG-FN based on ARGS."
-  (let ((proj-dir (expand-file-name (or (car args) (when-let* ((proj (project-current t))) (project-root proj)))))
-        (def-calling-dir default-directory)) ; `otpp--select-or-create-tab-root-dir' changes the `default-directory'
-    (cond ((otpp--select-or-create-tab-root-dir proj-dir) (funcall orig-fn proj-dir))
-          ((not (file-in-directory-p def-calling-dir proj-dir))
-           (cond ((functionp otpp-reconnect-tab) (funcall otpp-reconnect-tab proj-dir))
-                 (otpp-reconnect-tab (funcall orig-fn proj-dir)))))))
+  (if otpp-internal-call
+      (apply orig-fn args)
+    (let ((proj-dir (expand-file-name (or (car args) (when-let* ((proj (project-current t))) (project-root proj)))))
+          (def-calling-dir default-directory)) ; `otpp--select-or-create-tab-root-dir' changes the `default-directory'
+      (cond ((otpp--select-or-create-tab-root-dir proj-dir) (funcall orig-fn proj-dir))
+            ((not (file-in-directory-p def-calling-dir proj-dir))
+             (cond ((functionp otpp-reconnect-tab) (funcall otpp-reconnect-tab proj-dir))
+                   (otpp-reconnect-tab (funcall orig-fn proj-dir))))))))
 
 (defun otpp--project-kill-buffers-a (orig-fn &rest args)
   "Call ORIG-FN with ARGS, then close the current tab group, if any."
   (when-let* (((apply orig-fn args))
+              ((not otpp-internal-call))
               (tabs (funcall tab-bar-tabs-function))
               (curr-tab (assq 'current-tab tabs))
               (curr-tab-root-dir (otpp-get-tab-root-dir curr-tab)))
@@ -719,10 +747,12 @@ Calls ORIG-FN with ARGS."
           (advice-add 'find-file :around #'otpp--find-file-a))
         (advice-add 'kill-buffer :around #'otpp--bury-on-kill-buffer-in-multiple-tabs-a)
         ;; Rename the first tab to default name if needed
+        (add-hook 'tab-bar-tab-pre-close-functions #'otpp--kill-project-buffers)
         (otpp--set-default-tab-name)
         (add-hook 'server-after-make-frame-hook #'otpp--set-default-tab-name))
     (advice-remove 'find-file #'otpp--find-file-a)
     (advice-remove 'kill-buffer #'otpp--bury-on-kill-buffer-in-multiple-tabs-a)
+    (remove-hook 'tab-bar-tab-pre-close-functions #'otpp--kill-project-buffers)
     (remove-hook 'server-after-make-frame-hook #'otpp--set-default-tab-name)))
 
 ;;;###autoload
