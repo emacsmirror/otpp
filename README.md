@@ -166,6 +166,13 @@ This can be useful when the project include sub-projects (a Git
 repository with sub-modules, a Git repository with other Git repos
 inside, a Repo workspace, etc).
 
+#### `otpp-kill-project-buffers-on-tab-close`
+
+Kill the project's buffers when calling `tab-close`.
+
+Can be nil, `ask` or t or a function that returns one of them. When set
+to `ask`, ask for confirmation before killing the project's buffers.
+
 #### `otpp-post-change-tab-root-functions`
 
 List of functions to call after changing the `otpp-root-dir` of a tab.
@@ -215,6 +222,10 @@ When `otpp-mode` is enabled and only one tab exists, rename it to
 A regular expression to detect project-aware commands in `otpp-prefix`.
 
 ### Function and Macro Documentation
+
+#### `(otpp-with-internal-calls &rest BODY)` (macro)
+
+Call BODY with `otpp-internal-call` set to t.
 
 #### `(otpp-get-tab-root-dir &optional TAB)`
 
