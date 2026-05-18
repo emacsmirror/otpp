@@ -214,6 +214,14 @@ project that includes this path."
   :type '(choice function (symbol nil))
   :version "1.1.0")
 
+(defcustom otpp-project-name-local-variables '(otpp-project-name)
+  "List of local variables to consider for project name.
+
+This is used with the function `otpp-project-name'."
+  :group 'otpp
+  :type '(repeat symbol)
+  :version "3.5.2")
+
 (defcustom otpp-allow-detach-projectless-buffer nil
   "Allow detaching a buffer to a new tab even if it is projectless.
 
@@ -546,7 +554,7 @@ When DIR isn't part of any project, returns nil."
            (cl-some (lambda (var)
                       (or (alist-get var dir-local-variables-alist)
                           (alist-get var file-local-variables-alist)))
-                    '(otpp-project-name project-vc-name)))
+                    otpp-project-name-local-variables))
           (file-name-nondirectory (directory-file-name root))))))
 
 (defun otpp-find-tabs-by-root-dir (dir)
