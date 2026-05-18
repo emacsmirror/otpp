@@ -186,13 +186,14 @@ inside, a Repo workspace, etc)."
 (defcustom otpp-kill-project-buffers-on-tab-close nil
   "Kill the project's buffers when calling `tab-close'.
 
-Can be nil, `ask' or t or a function that returns one of them. When set
-to `ask', ask for confirmation before killing the project's buffers."
+Can be nil, t, \"ask\" (as a string) or a function that returns one of
+these values. When set to \"ask\", otpp will ask for confirmation before
+killing the project's buffers."
   :group 'otpp
   :type '(choice function
                  (const :tag "Don't kill project buffers" nil)
                  (const :tag "Kill project buffers without asking" t)
-                 (const :tag "Ask for confirmation" ask))
+                 (const :tag "Ask for confirmation" "ask"))
   :version "3.5.0")
 
 (defcustom otpp-post-change-tab-root-functions nil
@@ -646,7 +647,7 @@ command in the `default-directory', otherwise, it will bind the
    (when-let* ((killp (otpp--funcall-or-value otpp-kill-project-buffers-on-tab-close))
                (root-dir (otpp-get-tab-root-dir tab))
                (proj (project-current nil root-dir)))
-     (project-kill-buffers (not (eq killp 'ask)) proj))))
+     (project-kill-buffers (not (equal killp "ask")) proj))))
 
 ;;; Advices for the integration with `project'
 
