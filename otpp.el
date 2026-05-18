@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: May 17, 2026
+;; Modified: May 18, 2026
 ;; Version: 3.5.0
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -639,15 +639,16 @@ command in the `default-directory', otherwise, it will bind the
         (let ((default-directory root))
           (call-interactively command))))))
 
+;;; Hook for `tab-bar'
 
-;;; Advices for the integration with `project'
-
-(defun otpp--kill-project-buffers (tab last-tab-p)
+(defun otpp--tab-bar-kill-project-buffers (tab last-tab-p)
   (otpp-with-internal-calls
    (when-let* ((killp (otpp--funcall-or-value otpp-kill-project-buffers-on-tab-close))
                (root-dir (otpp-get-tab-root-dir tab))
                (proj (project-current nil root-dir)))
      (project-kill-buffers (not (eq killp 'ask)) proj))))
+
+;;; Advices for the integration with `project'
 
 (defun otpp--project-current-a (orig-fn &rest args)
   "Call ORIG-FN with ARGS, set the `otpp-root-dir' accordingly.
@@ -690,7 +691,10 @@ Calls ORIG-FN based on ARGS."
               (curr-tab (assq 'current-tab tabs))
               (curr-tab-root-dir (otpp-get-tab-root-dir curr-tab)))
     (if (length> tabs 1)
-        (tab-bar-close-tab)
+        ;; When closing the tab from from a `project-kill-buffers' command,
+        ;; there is no need to run the hook
+        (let ((tab-bar-tab-pre-close-functions (remq 'otpp--tab-bar-kill-project-buffers tab-bar-tab-pre-close-functions)))
+          (tab-bar-close-tab))
       ;; When the tab cannot be removed (last tab), remove the association
       ;; with the current project and rename it to the default
       (otpp-change-tab-root-dir nil)
@@ -747,12 +751,12 @@ Calls ORIG-FN with ARGS."
           (advice-add 'find-file :around #'otpp--find-file-a))
         (advice-add 'kill-buffer :around #'otpp--bury-on-kill-buffer-in-multiple-tabs-a)
         ;; Rename the first tab to default name if needed
-        (add-hook 'tab-bar-tab-pre-close-functions #'otpp--kill-project-buffers)
+        (add-hook 'tab-bar-tab-pre-close-functions #'otpp--tab-bar-kill-project-buffers)
         (otpp--set-default-tab-name)
         (add-hook 'server-after-make-frame-hook #'otpp--set-default-tab-name))
     (advice-remove 'find-file #'otpp--find-file-a)
     (advice-remove 'kill-buffer #'otpp--bury-on-kill-buffer-in-multiple-tabs-a)
-    (remove-hook 'tab-bar-tab-pre-close-functions #'otpp--kill-project-buffers)
+    (remove-hook 'tab-bar-tab-pre-close-functions #'otpp--tab-bar-kill-project-buffers)
     (remove-hook 'server-after-make-frame-hook #'otpp--set-default-tab-name)))
 
 ;;;###autoload
