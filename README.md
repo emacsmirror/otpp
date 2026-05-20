@@ -170,8 +170,9 @@ inside, a Repo workspace, etc).
 
 Kill the project's buffers when calling `tab-close`.
 
-Can be nil, `ask` or t or a function that returns one of them. When set
-to `ask`, ask for confirmation before killing the project's buffers.
+Can be nil, t, "ask" (as a string) or a function that returns one of
+these values. When set to "ask", otpp will ask for confirmation before
+killing the project's buffers.
 
 #### `otpp-post-change-tab-root-functions`
 
@@ -186,6 +187,12 @@ Derive project name from a directory.
 
 This function receives a directory and return the project name for the
 project that includes this path.
+
+#### `otpp-project-name-local-variables`
+
+List of local variables to consider for project name.
+
+This is used with the function `otpp-project-name`.
 
 #### `otpp-allow-detach-projectless-buffer`
 
