@@ -426,6 +426,14 @@ For the meaning of :MAP and :RENAME-FN, see `otpp-uniq-register'."
 
 ;;; Internals and helpers
 
+(defun otpp--same-dir-p (left right)
+  "Returns non-nil when paths LEFT and RIGHT points to the same directory."
+  (equal (file-name-as-directory (expand-file-name left)) (file-name-as-directory (expand-file-name right))))
+
+(defun otpp--tab-dir-p (dir tab)
+  "Returns non-nil TAB have DIR as root directory."
+  (and-let* ((tab-root (otpp-get-tab-root-dir tab))) (otpp--same-dir-p dir tab-root)))
+
 (defvar otpp--unique-tabs-map (make-hash-table :test 'equal))
 
 (defun otpp--update-all-tabs ()
@@ -442,12 +450,7 @@ For the meaning of :MAP and :RENAME-FN, see `otpp-uniq-register'."
             ;; it will have the same root as another tab and the same entry in
             ;; the unique map. We get the index of all similar tabs and we add a
             ;; numeric suffix to them in the same order.
-            (let* ((same-path-tabs-indexes
-                    (mapcar 'tab-bar--tab-index
-                            (seq-filter (lambda (tb)
-                                          (when-let* ((p (otpp-get-tab-root-dir tb)))
-                                            (equal path p)))
-                                        all-tabs)))
+            (let* ((same-path-tabs-indexes (mapcar #'tab-bar--tab-index (seq-filter (apply-partially #'otpp--tab-dir-p path) all-tabs)))
                    (name-suffix (and (length> same-path-tabs-indexes 1)
                                      (format "<%d>" (1+ (seq-position same-path-tabs-indexes (tab-bar--tab-index tab)))))))
               (setcdr (assoc 'name tab) (concat (alist-get 'unique-name unique) name-suffix)))
@@ -463,9 +466,7 @@ For the meaning of :MAP and :RENAME-FN, see `otpp-uniq-register'."
   (mapc (lambda (dir) (remhash dir otpp--unique-tabs-map))
         (seq-filter
          (lambda (dir)
-           (not (cl-some
-                 (lambda (tab) (equal (expand-file-name dir) (otpp-get-tab-root-dir tab)))
-                 (funcall tab-bar-tabs-function))))
+           (not (cl-some (apply-partially #'otpp--tab-dir-p dir) (funcall tab-bar-tabs-function))))
          (hash-table-keys otpp--unique-tabs-map)))
   (otpp-uniq-update-all :map 'otpp--unique-tabs-map))
 
@@ -543,7 +544,7 @@ When DIR isn't part of any project, returns nil."
     (with-temp-buffer
       (setq default-directory dir)
       (when-let* ((dir-locals-root (car (ensure-list (dir-locals-find-file (expand-file-name "dummy-file" dir)))))
-                  ((or (equal (expand-file-name root) (expand-file-name dir-locals-root))
+                  ((or (otpp--same-dir-p root dir-locals-root)
                        (otpp--funcall-or-value otpp-strictly-obey-dir-locals dir root dir-locals-root))))
         (hack-dir-local-variables)) ; Read the local variables, but don't apply them.
       (or (and
@@ -557,9 +558,7 @@ When DIR isn't part of any project, returns nil."
 
 (defun otpp-find-tabs-by-root-dir (dir)
   "Return a list of tabs that have DIR as `otpp-root-dir' attribute."
-  (seq-filter
-   (lambda (tab) (equal (expand-file-name dir) (otpp-get-tab-root-dir tab)))
-   (funcall tab-bar-tabs-function)))
+  (seq-filter (apply-partially #'otpp--tab-dir-p dir) (funcall tab-bar-tabs-function)))
 
 
 ;;; Commands
