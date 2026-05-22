@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: May 18, 2026
+;; Modified: May 22, 2026
 ;; Version: 3.5.2
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -528,12 +528,10 @@ is correct:
 - The `dir-locals-file' file is stored in the project root, i.e.,
   the project root is the same as the `dir-locals-file' directory.
 
-Then, this function checks in this order:
-
-1. If the local variable `otpp-project-name' is set locally in the
-`dir-locals-file', use it as project name.
-2. Same with the local variable `project-vc-name'.
-3. Return the directory name of the project's root.
+Then, this function checks if any of the local variables in
+`otpp-project-name-local-variables' is set locally in the
+`dir-locals-file', when it is the case, we uses its value as project
+name. Otherwise, we return the directory name of the project's root.
 
 When DIR isn't part of any project, returns nil."
   (when-let* ((dir (expand-file-name dir))
