@@ -683,7 +683,7 @@ Otherwise, select or create the tab of the selected project."
                 (maybe-prompt (car args)))
       (let ((curr-tab-root-dir (otpp-get-tab-root-dir))
             (target-proj-root-dir (expand-file-name proj-dir)))
-        (unless (equal curr-tab-root-dir target-proj-root-dir)
+        (unless (otpp--same-dir-p curr-tab-root-dir target-proj-root-dir)
           (otpp--select-or-create-tab-root-dir target-proj-root-dir))))
     proj-curr))
 
