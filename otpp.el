@@ -6,7 +6,7 @@
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
 ;; Modified: June 04, 2026
-;; Version: 3.5.2
+;; Version: 3.5.3
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
 ;; SPDX-License-Identifier: GPL-3.0
