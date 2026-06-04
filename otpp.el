@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: May 22, 2026
+;; Modified: June 04, 2026
 ;; Version: 3.5.2
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -513,6 +513,17 @@ Returns non-nil if a new tab was created, and nil otherwise."
 
 (define-obsolete-function-alias 'otpp-current-tab-root-dir #'otpp-get-tab-root-dir "3.0.3")
 
+(defun otpp-project-current (&optional tab)
+  "Return TAB's (or the current tab's) project."
+  (when-let* ((root-dir (otpp-get-tab-root-dir tab))
+              (proj (project-current nil root-dir))
+              ;; We check that the tab is pointing at the right porject. This
+              ;; is important when we remove/rename a project while its tab is
+              ;; still open, otherwise, it can propose to close the parent
+              ;; project if any.
+              ((otpp--same-dir-p root-dir (project-root proj))))
+    proj))
+
 (defun otpp-project-name (dir)
   "Get the project name from DIR.
 
@@ -647,11 +658,11 @@ command in the `default-directory', otherwise, it will bind the
 
 ;;; Hook for `tab-bar'
 
-(defun otpp--tab-bar-kill-project-buffers (tab last-tab-p)
+(defun otpp--tab-bar-kill-project-buffers (tab _last-tab-p)
+  "Propose to kill project buffers when the TAB is closed."
   (otpp-with-internal-calls
    (when-let* ((killp (otpp--funcall-or-value otpp-kill-project-buffers-on-tab-close))
-               (root-dir (otpp-get-tab-root-dir tab))
-               (proj (project-current nil root-dir)))
+               (proj (otpp-project-current tab)))
      (project-kill-buffers (not (equal killp "ask")) proj))))
 
 ;;; Advices for the integration with `project'
