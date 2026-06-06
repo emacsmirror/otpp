@@ -238,6 +238,10 @@ Call BODY with `otpp-internal-call` set to t.
 
 Get the root directory set to the TAB, default to the current tab.
 
+#### `(otpp-project-current &optional TAB)`
+
+Return TAB's (or the current tab's) project.
+
 #### `(otpp-project-name DIR)`
 
 Get the project name from DIR.
@@ -252,11 +256,10 @@ is correct:
   non-nil.
 - The `dir-locals-file` file is stored in the project root, i.e.,
   the project root is the same as the `dir-locals-file` directory.
-Then, this function checks in this order:
-1. If the local variable `otpp-project-name` is set locally in the
-`dir-locals-file`, use it as project name.
-2. Same with the local variable `project-vc-name`.
-3. Return the directory name of the project's root.
+Then, this function checks if any of the local variables in
+`otpp-project-name-local-variables` is set locally in the
+`dir-locals-file`, when it is the case, we uses its value as project
+name. Otherwise, we return the directory name of the project's root.
 When DIR isn't part of any project, returns nil.
 
 #### `(otpp-find-tabs-by-root-dir DIR)`
