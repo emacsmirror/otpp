@@ -5,7 +5,7 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: June 04, 2026
+;; Modified: June 06, 2026
 ;; Version: 3.5.3
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
@@ -428,7 +428,7 @@ For the meaning of :MAP and :RENAME-FN, see `otpp-uniq-register'."
 
 (defun otpp--same-dir-p (left right)
   "Returns non-nil when paths LEFT and RIGHT points to the same directory."
-  (equal (file-name-as-directory (expand-file-name left)) (file-name-as-directory (expand-file-name right))))
+  (and left right (equal (file-name-as-directory (expand-file-name left)) (file-name-as-directory (expand-file-name right)))))
 
 (defun otpp--tab-dir-p (dir tab)
   "Returns non-nil TAB have DIR as root directory."
